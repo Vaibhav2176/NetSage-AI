@@ -2,232 +2,669 @@
 
 **Network Troubleshooting & Configuration Diagnostic Assistant**
 
+[🚀 Live Demo](https://netsage-ai-by-vaibhav2176a.streamlit.app/)
+
+---
+
 ## Overview
 
-NetSage AI is an AI-assisted Cisco/network troubleshooting application.
-It takes a networking problem and Cisco CLI/configuration evidence, runs
-deterministic rule-based checks first, then (optionally) uses an AI
-model to explain the likely root cause, evidence, OSI layer, confidence,
-next diagnostic command, and recommended fix — with mandatory human
-review before anything is considered "actionable."
+NetSage AI is an AI-assisted network troubleshooting and configuration diagnostic platform designed to help engineers and students analyze Cisco/networking problems using structured evidence.
 
-**The AI is never the sole source of truth.** It recommends; a human
-approves, edits, or rejects; every decision is logged.
+The system follows a **hybrid deterministic + AI approach**:
 
-## Problem statement
+1. A networking scenario and its Cisco CLI/configuration evidence are provided.
+2. A deterministic rule engine analyzes the evidence first.
+3. The resulting findings are passed to an AI diagnosis layer when Gemini is configured.
+4. Gemini explains and prioritizes the evidence without replacing the deterministic checks.
+5. An engineer reviews the diagnosis and can approve, edit, or reject it.
+6. The decision is recorded in an audit log.
 
-Diagnosing multi-layer network failures (in Cisco Packet Tracer labs or
-real environments) requires reading verbose `show` command output,
-cross-referencing config against expected topology, and applying
-expert-level pattern recognition across OSI layers — a slow, error-prone
-process for students and operators when configuration changes are applied without verification. NetSage AI narrows that gap
-with a hybrid deterministic + AI pipeline and a human-in-the-loop gate,
-rather than either a rigid rule engine alone or an unconstrained LLM.
+**The AI is never treated as the sole source of truth.**
 
-## Features
+The application is designed around a **human-in-the-loop workflow**, where AI provides an explanation and recommendation while the final decision remains with the engineer.
 
-- 30-case authoritative dataset (`data/cases.csv`) covering IPv4
-  addressing, VLANs/trunking, inter-VLAN routing, DHCP (+relay + pool
-  exhaustion), DNS, static/default routing, OSPF, ACLs, NAT/PAT, guest
-  wireless isolation, port security, HSRP, IPv6 SLAAC, CDP, VTP, DAI,
-  and RADIUS.
-- Deterministic, regex-based rule checker (`src/checker.py`, 34 rules)
-  that runs before any AI call and works even with zero AI configured.
-- AI diagnosis layer using Google Gemini that explains and prioritizes deterministic findings via a strict JSON schema.
-- Malformed/missing AI output is caught and gracefully falls back to a
-  clearly labeled deterministic-only diagnosis — the app never crashes.
-- Full human-in-the-loop workflow: Approve / Edit / Reject.
-- Append-only JSONL audit log of every diagnosis + review decision.
-- `evaluate.py` compares deterministic findings with the expected fault for all 30 cases.
-- 31 unit tests (`pytest tests/`).
+---
 
-## Architecture
+## Problem Statement
 
-See [`docs/architecture.md`](docs/architecture.md) for the full pipeline
-diagram (Mermaid + ASCII) and module responsibility table. Summary:
+Diagnosing multi-layer network failures requires analyzing verbose Cisco `show` command output, comparing configuration evidence with the expected topology, and applying networking knowledge across multiple OSI layers.
 
+This process can be time-consuming and error-prone, particularly when troubleshooting a large number of scenarios.
+
+NetSage AI addresses this problem through a hybrid architecture that combines:
+
+- Deterministic rule-based verification
+- AI-assisted diagnosis
+- Structured evidence
+- Human review
+- Audit logging
+
+The system is intentionally designed to avoid relying solely on an unconstrained AI model.
+
+---
+
+## Key Features
+
+### 🔎 Scenario Inspection
+
+Allows the reviewer to select and inspect one of the supplied networking scenarios, including:
+
+- Case ID
+- Symptom
+- Topology notes
+- Networking concept
+- Severity
+- Captured Cisco CLI/show output
+- Expected fault
+
+### 🧪 Deterministic Rule Validation
+
+The deterministic rule engine analyzes the supplied evidence before any AI request is made.
+
+The current rule set contains approximately **34 pattern-based troubleshooting rules** covering the supplied networking scenarios.
+
+The rule engine can identify patterns related to areas such as:
+
+- IPv4 addressing
+- VLANs
+- Trunking
+- Inter-VLAN routing
+- DHCP
+- DNS
+- Static routing
+- Default routing
+- OSPF
+- ACLs
+- NAT/PAT
+- Wireless isolation
+- Port security
+- HSRP
+- IPv6 SLAAC
+- CDP
+- VTP
+- Dynamic ARP Inspection
+- RADIUS
+
+Each matching rule produces structured information such as:
+
+- Root cause
+- Evidence
+- OSI layer
+- Severity
+- Suggested diagnostic command
+- Suggested fix
+
+### 🧠 Gemini-Assisted Diagnosis
+
+When Gemini is configured, NetSage AI sends the application case context and deterministic findings to the Gemini API.
+
+The AI layer is instructed to:
+
+- Explain the deterministic findings
+- Prioritize relevant evidence
+- Avoid inventing evidence
+- Identify the likely root cause
+- Identify the relevant OSI layer
+- Provide a confidence level
+- Suggest the next diagnostic command
+- Recommend a potential fix
+
+The response is validated against the application's expected structured diagnosis format.
+
+The application currently uses:
+
+`gemini-3.5-flash-lite`
+
+If Gemini is unavailable, incorrectly configured, or produces invalid output, the application falls back to a clearly identified deterministic-only diagnosis.
+
+---
+
+## Human-in-the-Loop Review
+
+NetSage AI does not automatically execute network configuration commands.
+
+Every diagnosis goes through an engineer review stage.
+
+The reviewer can:
+
+- **Approve & Deploy Fix**
+- **Edit Configuration Commands**
+- **Reject Recommendation**
+
+Edited recommendations preserve the original diagnosis for traceability.
+
+Rejected recommendations require a reason.
+
+This ensures that AI-generated recommendations are treated as decision support rather than autonomous network changes.
+
+---
+
+## Audit Logging
+
+Every review decision is recorded in an append-only JSONL audit log.
+
+The log records information associated with:
+
+- Case ID
+- Diagnosis
+- Review decision
+- Edited recommendations
+- Rejection reasons
+- Timestamp
+- Review outcome
+
+The audit implementation is provided by:
+
+`src/audit.py`
+
+The detailed audit structure is documented in:
+
+`docs/model_audit_log.md`
+
+For local evaluation, the audit log is stored under:
+
+`outputs/audit_log.jsonl`
+
+For persistent multi-user production deployment, an external database or durable storage backend would be more appropriate.
+
+---
+
+## Dashboard & Statistics
+
+The application includes a dashboard for reviewing dataset and human-review statistics.
+
+The dashboard provides information such as:
+
+- Total dataset cases
+- Cases reviewed during the current session
+- Accepted recommendations
+- Edited recommendations
+- Rejected recommendations
+- AI-human agreement
+- Issue-type distribution
+- Severity distribution
+- Human review outcomes
+
+These statistics provide a high-level view of the diagnostic and review process.
+
+---
+
+## System Architecture
+
+The overall workflow is:
+
+```text
+                  ┌─────────────────────┐
+                  │   Network Scenario  │
+                  │    + CLI Evidence   │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ Deterministic Rule  │
+                  │      Checker        │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ Structured Findings │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │   Gemini Diagnosis  │
+                  │   (optional layer)  │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ Validated Diagnosis │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │   Engineer Review   │
+                  │ Approve / Edit /    │
+                  │ Reject              │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │     Audit Log       │
+                  └─────────────────────┘
 ```
-case/evidence -> deterministic checker -> structured findings
-              -> AI diagnosis (or deterministic fallback) -> validated JSON
-              -> human review (approve/edit/reject) -> audit log
-```
 
-## Installation
+Detailed architecture documentation is available in:
 
-Requires Python 3.10+.
+`docs/architecture.md`
 
-```bash
-git clone <this-repo>
-cd NetSage-AI
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-## Environment variables
-
-Copy `.env.example` to `.env` and fill in only what you need:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Purpose |
-|---|---|
-| `AI_PROVIDER` | `gemini` or blank for deterministic-only mode |
-| `GEMINI_API_KEY` / `GEMINI_MODEL` | Used when `AI_PROVIDER=gemini` |
-| `AI_TIMEOUT_SECONDS` | Timeout applied to the AI provider call |
-
-The app works fully without any of these set — it just won't produce an
-AI-synthesized diagnosis, only the deterministic one.
-
-
-## Gemini configuration
-
-NetSage can run fully without an API key. When `AI_PROVIDER=gemini` and
-`GEMINI_API_KEY` are configured, the diagnosis engine sends the application
-case context and deterministic findings to the Gemini API and validates the
-returned JSON before displaying it.
-
-The project defaults to `gemini-3.5-flash-lite`. Gemini offers a free tier
-for supported models subject to current rate limits. No API key is stored
-in this repository.
+---
 
 ## Project Workflow
 
-The application follows a six-stage workflow:
+The application follows six major stages.
 
-1. **Scenario Inspection & Human Review Gate** — review the selected case,
-   topology context, expected fault, and captured Cisco show output.
-2. **Deterministic Rule Validation** — identify known network configuration or
-   connectivity findings from the supplied evidence.
-3. **Diagnosis** — combine the deterministic findings with Gemini-assisted
-   explanation when Gemini is configured.
-4. **Engineer Verification & Deployment Approval** — an engineer approves,
-   edits, or rejects the recommendation.
-5. **Dashboard & Statistics** — review case coverage, issue types, severity,
-   and human review outcomes.
-6. **Audit History** — retain review decisions for evaluation and traceability.
+### 1. Scenario Inspection & Human Review Gate
 
-## Running locally
+The reviewer selects a case and examines:
+
+- Scenario information
+- Topology context
+- Expected fault
+- Cisco evidence
+- Severity
+- Networking concept
+
+### 2. Deterministic Rule Validation
+
+The rule checker analyzes the supplied evidence and identifies known fault patterns.
+
+### 3. Diagnosis
+
+The deterministic findings are converted into a structured diagnosis.
+
+When Gemini is configured, the AI layer explains and prioritizes the findings.
+
+### 4. Engineer Verification & Deployment Approval
+
+The engineer reviews the recommendation and can:
+
+- Approve it
+- Edit it
+- Reject it
+
+No configuration command is automatically executed.
+
+### 5. Dashboard & Statistics
+
+The reviewer can inspect aggregate statistics about:
+
+- Dataset cases
+- Issue types
+- Severity
+- Review outcomes
+- AI-human agreement
+
+### 6. Audit History
+
+Review decisions are recorded for traceability and future analysis.
+
+---
+
+## Dataset
+
+The project includes an authoritative dataset containing **30 networking troubleshooting cases**.
+
+The dataset is stored in:
+
+`data/cases.csv`
+
+The cases cover a range of networking concepts including:
+
+- ACL
+- DHCP
+- DNS
+- Gateway
+- NAT
+- Routing
+- VLAN
+- Wireless
+- OSPF
+- Static routing
+- Default routing
+- Inter-VLAN routing
+- Trunking
+- Port security
+- HSRP
+- IPv6 SLAAC
+- CDP
+- VTP
+- Dynamic ARP Inspection
+- RADIUS
+
+Each case contains structured scenario information and captured evidence used by the diagnostic pipeline.
+
+---
+
+## Deterministic Checker
+
+The deterministic checker is implemented in:
+
+`src/checker.py`
+
+It normalizes the supplied evidence and applies pattern-based rules to identify known networking faults.
+
+Each rule produces a structured result containing information such as:
+
+- Root Cause
+- Evidence
+- OSI Layer
+- Severity
+- Suggested Command
+- Suggested Fix
+
+The deterministic layer is deliberately executed before the AI layer.
+
+This provides a reproducible baseline and allows the system to continue operating even when AI functionality is unavailable.
+
+Detailed troubleshooting logic is documented in:
+
+`docs/troubleshooting_logic.md`
+
+---
+
+## AI Layer
+
+The AI integration is implemented through:
+
+- `src/ai_client.py`
+- `src/engine.py`
+- `prompts/diagnose_prompt.md`
+
+The diagnosis engine provides Gemini with:
+
+- Case information
+- Symptom
+- Topology context
+- Cisco evidence
+- Deterministic findings
+
+The AI is instructed to explain and prioritize the supplied evidence rather than invent unsupported findings.
+
+The response is validated before it is displayed by the application.
+
+If the AI request fails or produces invalid output, the application returns a deterministic-only diagnosis instead of crashing.
+
+---
+
+## Gemini Configuration
+
+NetSage AI supports Gemini through environment variables.
+
+### Local Configuration
+
+Create a `.env` file in the project root.
+
+Example:
+
+```env
+AI_PROVIDER = "gemini"
+GEMINI_API_KEY = "your-gemini-api-key"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+AI_TIMEOUT_SECONDS = "30"
+```
+
+The actual `.env` file must never be committed to GitHub.
+
+A template is provided as:
+
+`.env.example`
+
+### Streamlit Deployment
+
+For the deployed Streamlit application, Gemini credentials are stored using Streamlit Secrets.
+
+The repository does not contain the actual Gemini API key.
+
+The application reads the same configuration at runtime.
+
+### Deterministic-Only Mode
+
+NetSage AI can also run without Gemini.
+
+If no AI provider is configured, the deterministic rule checker continues to provide the diagnostic findings.
+
+---
+
+## Installation
+
+### Requirements
+
+- Python 3.10 or newer
+- pip
+- Git
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/Vaibhav2176/NetSage-AI.git
+cd NetSage-AI
+```
+
+### Create a Virtual Environment
+
+#### Windows
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+#### Linux/macOS
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Running Locally
+
+Start the Streamlit application:
 
 ```bash
 streamlit run app.py
 ```
 
-Then open the printed local URL (typically `http://localhost:8501`).
+The application will normally be available at:
 
-## How the deterministic checker works
+`http://localhost:8501`
 
-`src/checker.py` runs ~34 pattern-matching rules against the combined
-symptom + topology note + Cisco evidence text (normalized for
-whitespace/case). Every matching rule is returned as a `RuleResult` with
-its own root cause, evidence snippet, OSI layer, severity, suggested
-command, and suggested fix. See
-[`docs/troubleshooting_logic.md`](docs/troubleshooting_logic.md) for the
-full rule catalogue and matching logic.
+If Gemini is being used locally, configure the `.env` file before starting the application.
 
-## How the AI layer works
+---
 
-`src/engine.py` builds an application case context (documented in full in
-[`prompts/diagnose_prompt.md`](prompts/diagnose_prompt.md)) that includes
-the case evidence *and* the deterministic findings, instructing the
-model to explain/prioritize rather than invent evidence, and to return
-strict JSON matching a fixed schema. `src/ai_client.py` abstracts the
-actual Gemini API call and attempts safe JSON
-recovery if the model's response isn't perfectly clean JSON. If the AI
-is unavailable or its output can't be validated, the engine returns a
-deterministic-only `Diagnosis` instead of failing.
+## Deployment
 
-## Human-in-the-loop process
+NetSage AI is currently deployed using **Streamlit Community Cloud**.
 
-Every diagnosis — AI-generated or deterministic-only — must be
-Approved, Edited, or Rejected in the UI before it's considered final.
-Editing preserves both the original and edited versions; rejecting
-requires a reason. No Cisco configuration command is ever executed by
-this application; it only displays recommendations.
+### Live Application
 
-## Audit logging
+[https://netsage-ai-by-vaibhav2176a.streamlit.app/](https://netsage-ai-by-vaibhav2176a.streamlit.app/)
 
-Every review decision is appended as one line of JSON to
-`outputs/audit_log.jsonl` (see `src/audit.py`). See
-[`docs/model_audit_log.md`](docs/model_audit_log.md) for the full field
-reference and guidance on analyzing false positives/negatives over time.
+### Deployment Configuration
+
+The deployed application uses:
+
+- **Repository:** `Vaibhav2176/NetSage-AI`
+- **Branch:** `main`
+- **Main file:** `app.py`
+
+Gemini credentials are stored using Streamlit Secrets and are not committed to the GitHub repository.
+
+The deployed application can operate in deterministic-only mode if Gemini is unavailable.
+
+---
 
 ## Testing
+
+The project includes automated tests under:
+
+`tests/`
+
+Run the complete test suite using:
 
 ```bash
 pytest tests/ -v
 ```
 
-Covers CSV loading/validation, case lookup, each major rule category,
-malformed-evidence handling, and AI JSON validation/fallback behavior
-(31 tests, all passing as of this build).
+The current test suite contains **31 tests**.
+
+The tests cover areas including:
+
+- CSV loading and validation
+- Case lookup
+- Deterministic rule checking
+- Major networking rule categories
+- Malformed evidence handling
+- Diagnosis generation
+- AI response validation
+- AI fallback behavior
+
+### Current Test Result
+
+```text
+31/31 tests passing
+```
+
+---
 
 ## Evaluation
+
+The project includes an evaluation script:
+
+`evaluate.py`
+
+Run it with:
 
 ```bash
 python evaluate.py
 ```
 
-Runs the deterministic checker against all 30 cases and fuzzy-compares
-the top finding to each case's `expected_fault`. **Actual result on this
-build: 28/30 correct (93.3%), 0 missed entirely, 2 near-miss on wording**
-— see [`docs/troubleshooting_logic.md`](docs/troubleshooting_logic.md)
-for the two wording-based misses and why they still produce a relevant
-finding.
+The evaluator runs the deterministic checker against all **30 supplied cases** and compares the resulting findings against each case's expected fault.
 
-## Deployment (Streamlit Cloud)
+### Current Evaluation Result
 
-1. Push this repository to GitHub (ensure `.env` is **not** committed —
-   it's in `.gitignore`).
-2. In Streamlit Cloud, create a new app pointing at `app.py` on your
-   branch.
-3. Under the app's **Settings → Secrets**, add the same keys as
-   `.env.example` (e.g. `AI_PROVIDER = "gemini"`,
-   `GEMINI_API_KEY = "your-gemini-key"`). Streamlit Cloud exposes these as
-   environment variables, which `app.py`/`src/ai_client.py` read the
-   same way as a local `.env`.
-4. Deploy. The app works immediately in deterministic-only mode even
-   before secrets are configured.
+```text
+Total cases: 30
+Correct deterministic detections: 30
+Missed: 0
+Mismatched: 0
+Accuracy: 100.0%
+```
+
+The deterministic evaluation provides a reproducible baseline independent of the Gemini API.
+
+---
+
+## Current Project Status
+
+The current implementation includes:
+
+- ✅ 30 supplied networking cases
+- ✅ Deterministic rule validation
+- ✅ 34 troubleshooting rules
+- ✅ 30/30 deterministic evaluation accuracy
+- ✅ 31/31 automated tests passing
+- ✅ Gemini-assisted diagnosis
+- ✅ Structured AI response validation
+- ✅ Deterministic fallback when AI is unavailable
+- ✅ Human-in-the-loop review
+- ✅ Approve / Edit / Reject workflow
+- ✅ Audit logging
+- ✅ Dashboard and statistics
+- ✅ Streamlit deployment
+- ✅ Secure Gemini API configuration through Streamlit Secrets
+
+---
+
+## Security
+
+The Gemini API key is not stored in the source code or GitHub repository.
+
+Local development uses:
+
+`.env`
+
+which is excluded through:
+
+`.gitignore`
+
+The repository only contains:
+
+`.env.example`
+
+as a configuration template.
+
+For Streamlit deployment, secrets are stored through the platform's encrypted Secrets configuration.
+
+No Cisco configuration command is automatically executed by the application.
+
+---
+
+## Human-in-the-Loop Design
+
+The application intentionally separates:
+
+```text
+Detection
+   ↓
+AI Explanation
+   ↓
+Human Review
+   ↓
+Final Decision
+```
+
+This design reduces the risk of treating an AI-generated recommendation as an automatically trusted network configuration.
+
+The application only provides recommendations.
+
+An engineer must review the recommendation before it is considered actionable.
+
+---
 
 ## Limitations
 
-- The deterministic rule set is tuned for the vocabulary in the supplied
-  30-case dataset and common Cisco IOS phrasing; it is not a general
-  Cisco config parser and can miss faults phrased very differently from
-  what it expects.
-- The AI layer depends on an external API; network/provider outages
-  degrade the app to deterministic-only mode rather than blocking it.
-- The audit log is a local JSONL file, suitable for a single-user local
-  or small-team Streamlit Cloud deployment — not a multi-writer
-  production datastore.
-- Fuzzy matching in `evaluate.py` is a heuristic (token overlap +
-  sequence similarity), not a semantic/embedding-based comparison.
+The current implementation has several limitations:
 
-## Future improvements
+- The deterministic rule set is tuned primarily to the vocabulary and evidence patterns represented in the supplied 30-case dataset and common Cisco IOS phrasing.
+- It is not a complete Cisco configuration parser.
+- Faults phrased substantially differently from the supported patterns may not be detected by the deterministic checker.
+- The AI diagnosis layer depends on an external Gemini API.
+- Provider outages, rate limits, or configuration errors can prevent AI-assisted diagnosis.
+- The application falls back to deterministic diagnosis when AI functionality is unavailable.
+- The audit log currently uses local JSONL storage and is not designed as a multi-user production database.
+- The evaluation comparison is heuristic rather than semantic or embedding-based.
 
-- Add more deterministic rules as new fault patterns are observed in
-  rejected/edited audit records (see
-  [`docs/model_audit_log.md`](docs/model_audit_log.md)).
-- Add a lightweight database backend if multi-user concurrent audit
-  logging becomes necessary.
-- Add confidence calibration by comparing AI confidence scores against
-  actual human approve/edit/reject outcomes over time.
-- Expand the deterministic rule library as new troubleshooting patterns are added.
+---
 
-## Project structure
+## Future Improvements
 
-```
+Potential future improvements include:
+
+- Expanding the deterministic rule library as additional fault patterns are identified.
+- Adding more networking troubleshooting cases.
+- Introducing a persistent database for multi-user audit logging.
+- Improving confidence calibration using historical human review outcomes.
+- Expanding automated evaluation and regression testing.
+- Adding more structured network configuration parsing.
+- Improving long-term audit analytics.
+
+---
+
+## Project Structure
+
+```text
 NetSage-AI/
+│
 ├── app.py
 ├── evaluate.py
 ├── requirements.txt
 ├── README.md
 ├── .gitignore
 ├── .env.example
+│
 ├── data/
 │   └── cases.csv
+│
 ├── src/
 │   ├── __init__.py
 │   ├── checker.py
@@ -237,17 +674,87 @@ NetSage-AI/
 │   ├── ai_client.py
 │   ├── audit.py
 │   └── utils.py
+│
 ├── prompts/
 │   └── diagnose_prompt.md
+│
 ├── docs/
 │   ├── architecture.md
 │   ├── troubleshooting_logic.md
 │   ├── model_audit_log.md
 │   └── user_guide.md
+│
 ├── tests/
 │   ├── test_checker.py
 │   ├── test_case_loader.py
 │   └── test_engine.py
+│
 └── outputs/
     └── .gitkeep
 ```
+
+---
+
+## Documentation
+
+Additional project documentation is available in the `docs/` directory.
+
+### Architecture
+
+`docs/architecture.md`
+
+Describes the overall system architecture and module responsibilities.
+
+### Troubleshooting Logic
+
+`docs/troubleshooting_logic.md`
+
+Describes the deterministic rule catalogue and matching logic.
+
+### Model Audit Log
+
+`docs/model_audit_log.md`
+
+Describes the audit log fields and guidance for analyzing review outcomes.
+
+### User Guide
+
+`docs/user_guide.md`
+
+Provides instructions for running and evaluating the application.
+
+---
+
+## Design Principles
+
+NetSage AI is built around the following principles:
+
+### Evidence First
+
+The system prioritizes supplied networking evidence instead of relying solely on generated assumptions.
+
+### Deterministic Verification
+
+Known networking fault patterns are checked using reproducible rules before AI diagnosis is requested.
+
+### AI as an Assistant
+
+Gemini provides explanation and prioritization rather than acting as the sole diagnostic authority.
+
+### Human Oversight
+
+An engineer reviews every diagnosis before it is considered actionable.
+
+### Safe Failure
+
+If the AI provider is unavailable or produces invalid output, the deterministic diagnostic layer remains available.
+
+### Traceability
+
+Human review decisions are recorded in the audit log.
+
+---
+
+## License
+
+This project was developed as part of a Cisco virtual internship project.
