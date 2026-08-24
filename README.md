@@ -665,6 +665,14 @@ NetSage-AI/
 ├── data/
 │   └── cases.csv
 │
+|──deliverables/
+│   ├── diagnose_prompt.md
+│   ├── responsible_ai_log.md
+│   ├── dashboard_statistics.xlsx
+│   └── checker/
+│       ├── checker.py
+│       └── sample_output.txt
+|
 ├── src/
 │   ├── __init__.py
 │   ├── checker.py

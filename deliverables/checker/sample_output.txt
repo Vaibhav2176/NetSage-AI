@@ -1,0 +1,40 @@
+Case      Match  Expected                                      Detected
+--------------------------------------------------------------------------------------------------------------
+NET-001   YES    Sub-interface administratively down           Interface administratively down
+NET-002   YES    DHCP Scope Pool Exhaustion                    DHCP scope/pool exhausted
+NET-003   YES    DNS service disabled on client subnet gatew   DNS resolution disabled/misconfigured
+NET-004   YES    OSPF Hello Timer Mismatch                     OSPF hello/dead timer mismatch
+NET-005   YES    Extended ACL blocking HTTP traffic            ACL explicitly blocking required traffic
+NET-006   YES    NAT Overload/PAT keyword missing              PAT/NAT overload keyword missing
+NET-007   YES    Overly permissive ACL on Guest VLAN           Overly permissive ACL on Guest VLAN
+NET-008   YES    VLAN pruned/missing from trunk allowed list   VLAN missing/pruned from trunk allowed list
+NET-009   YES    Host Default Gateway IP Misconfiguration      Host default gateway misconfigured
+NET-010   YES    Management SVI interface in shutdown state    Management SVI (VLAN interface) is shut down
+NET-011   YES    Inter-switch link configured as access inst   Inter-switch link configured as access instead of trunk
+NET-012   YES    Passive interface enabled on active OSPF li   OSPF passive-interface suppresses adjacency on an active link
+NET-013   YES    Switch port assigned to wrong access VLAN     Switchport assigned to the wrong access VLAN
+NET-014   YES    Missing IP Helper-Address for DHCP Relay      DHCP relay (ip helper-address) missing
+NET-015   YES    Invalid static route next-hop IP address      Static route points to an unreachable next hop
+NET-016   YES    ACL missing FTP control port 21 permit rule   ACL is missing a required permit rule
+NET-017   YES    NAT interface direction missing on internal   NAT 'inside' direction not applied on the interface
+NET-018   YES    RADIUS Shared Secret Mismatch                 RADIUS shared secret mismatch
+NET-019   YES    Native VLAN Mismatch on trunk link            Native VLAN mismatch on trunk link
+NET-020   YES    Default Gateway outside client subnet range   Default gateway is outside the host's subnet
+NET-021   YES    OSPF redistribution missing subnets flag      OSPF redistribution missing 'subnets' keyword
+NET-022   YES    ACL blocking SSL/TLS port 443                 ACL blocking SSL/TLS port 443
+NET-023   YES    Duplicate IP Address Assignment               Duplicate IP address on the segment
+NET-024   YES    VTP Domain Name Mismatch                      VTP domain name mismatch
+NET-025   YES    Uplink trunk port not configured as DAI tru   DAI trust not configured on uplink port
+NET-026   YES    Port security violation limit exceeded        Port security violation / err-disabled port
+NET-027   YES    HSRP Timer Mismatch between peers             HSRP hello timer mismatch between peers
+NET-028   YES    Missing 802.1Q encapsulation on sub-interfa   Missing 802.1Q encapsulation on router sub-interface
+NET-029   YES    IPv6 Router Advertisements (RA) suppressed    IPv6 Router Advertisements suppressed
+NET-030   YES    CDP disabled globally on device               CDP disabled globally
+
+Summary
+-------
+Total cases: 30
+Correct deterministic detections: 30
+Missed (no rule matched): 0
+Mismatched (a rule matched, but not the expected fault): 0
+Accuracy: 100.0%
