@@ -669,6 +669,7 @@ NetSage-AI/
 │   ├── diagnose_prompt.md
 │   ├── responsible_ai_log.md
 │   ├── dashboard_statistics.xlsx
+    ├── Demo Video (NetSage-AI).webm
 │   └── checker/
 │       ├── checker.py
 │       └── sample_output.txt
