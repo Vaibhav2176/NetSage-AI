@@ -12,6 +12,9 @@ __pycache__/
 venv/
 env/
 
+# Original Documents
+/Given docs
+
 # Streamlit
 .streamlit/secrets.toml
 
