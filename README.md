@@ -2,7 +2,7 @@
 
 **Network Troubleshooting & Configuration Diagnostic Assistant**
 
-[🚀 Live Demo](https://netsage-ai-by-vaibhav2176a.streamlit.app/)
+[🚀 Live Demo](https://netsage-ai-by-vaibhav2176a.streamlit.app/) · [🎥 Demo Video](https://github.com/Vaibhav2176/NetSage-AI/blob/main/deliverables/Demo%20Video%20%28NetSage-AI%29.webm)
 
 ---
 
@@ -61,7 +61,7 @@ Allows the reviewer to select and inspect one of the supplied networking scenari
 
 The deterministic rule engine analyzes the supplied evidence before any AI request is made.
 
-The current rule set contains approximately **34 pattern-based troubleshooting rules** covering the supplied networking scenarios.
+The current rule set contains **35 pattern-based troubleshooting rules** covering the supplied networking scenarios.
 
 The rule engine can identify patterns related to areas such as:
 
@@ -505,7 +505,7 @@ Run the complete test suite using:
 pytest tests/ -v
 ```
 
-The current test suite contains **31 tests**.
+The repository currently contains **31 automated tests**. The result below is the documented baseline; it does not claim a newly executed test run.
 
 The tests cover areas including:
 
@@ -521,7 +521,7 @@ The tests cover areas including:
 ### Current Test Result
 
 ```text
-31/31 tests passing
+Documented baseline: 31/31 tests passing
 ```
 
 ---
@@ -560,9 +560,9 @@ The current implementation includes:
 
 - ✅ 30 supplied networking cases
 - ✅ Deterministic rule validation
-- ✅ 34 troubleshooting rules
+- ✅ 35 troubleshooting rules
 - ✅ 30/30 deterministic evaluation accuracy
-- ✅ 31/31 automated tests passing
+- ✅ Documented baseline: 31/31 automated tests passing
 - ✅ Gemini-assisted diagnosis
 - ✅ Structured AI response validation
 - ✅ Deterministic fallback when AI is unavailable
